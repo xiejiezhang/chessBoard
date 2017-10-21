@@ -17,7 +17,7 @@ protected: // 仅从序列化创建
 
 // 特性
 public:
-
+	CMFCStatusBar     m_wndStatusBar;
 // 操作
 public:
 
@@ -37,7 +37,7 @@ public:
 protected:  // 控件条嵌入成员
 	CMFCMenuBar       m_wndMenuBar;
 	CMFCToolBar       m_wndToolBar;
-	CMFCStatusBar     m_wndStatusBar;
+	
 	CMFCToolBarImages m_UserImages;
 	CFileView         m_wndFileView;
 	CClassView        m_wndClassView;

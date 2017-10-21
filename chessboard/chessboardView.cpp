@@ -12,6 +12,7 @@
 #include "chessboardDoc.h"
 #include "chessboardView.h"
 #include "PointItem.h"
+#include "MainFrm.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,6 +22,11 @@
 #include <GdiPlus.h>
 #pragma comment(lib, "GdiPlus.lib")
 using namespace Gdiplus;
+
+#define WALL_COLOR  Gdiplus::Color(0, 0, 0)
+#define WALL_WIDTH  2
+#define AREA_COLOR  Gdiplus::Color(0, 255, 255)
+#define AREA_WIDTH  2
 
 // CchessboardView
 
@@ -135,27 +141,52 @@ void CchessboardView::OnContextMenu(CWnd* /* pWnd */, CPoint point)
 void CchessboardView::OnLButtonDown(UINT nFlags, CPoint point)
 {
 	CchessboardDoc *pDoc = GetDocument();
-
-	if(m_isDraw) {
-		m_lastPoint = point;
-		if (pDoc->m_groupLast != NULL) {
-			if (pDoc->m_groupLast->ptr != NULL) {
-				pDoc->m_groupLast->ptr->last->point = point;
-			}
+	float witch;
+	Gdiplus::Color color;
+	POINT_TYPE type;
+	if ((m_mode == M_DRAW_A) || (m_mode == M_DRAW_W)) {
+		if (m_mode == M_DRAW_W) {
+		   witch = WALL_WIDTH;
+		   color = WALL_COLOR;
+		   type  = WALL_T;
+		} else {
+		   witch = AREA_WIDTH;
+		   color = AREA_COLOR;
+		   type  = AREA_T;
 		}
-        pDoc->addPointItem(point, Gdiplus::Color(0, 255, 255), 2);//最后一个浮动点
+		if(m_isDraw) {
+			//
+			if(::GetKeyState(VK_SHIFT) & 0x8000 ) {
+				if (abs(point.x - pDoc->m_groupLast->ptr->last->last->point.x) > abs(point.y - pDoc->m_groupLast->ptr->last->last->point.y)) {
+					point.y = pDoc->m_groupLast->ptr->last->last->point.y;
+				} else {
+					point.x = pDoc->m_groupLast->ptr->last->last->point.x;
+				} 
+			}
+
+			m_lastPoint = point;
+			if (pDoc->m_groupLast != NULL) {
+				if (pDoc->m_groupLast->ptr != NULL) {
+					pDoc->m_groupLast->ptr->last->point = point;
+				}
+			}
+			pDoc->addPointItem(point, color, witch,type);//最后一个浮动点
+		} else {
+		   if (pDoc->m_groupLast != NULL) {
+			   pDoc->addNewPointsGroup(point, color, witch,type);
+			   pDoc->addPointItem(point, color, witch,type);//最后一个浮动点
+		   } else {
+			  pDoc->addPointItem(point, color, witch,type);//确认点
+			  pDoc->addPointItem(point, color, witch,type);//最后一个浮动点
+		   }
+		   m_isDraw    = true;
+		   m_lastPoint = point;
+		}
 	} else {
-	   if (pDoc->m_groupLast != NULL) {
-           pDoc->addNewPointsGroup(point, Gdiplus::Color(0, 255, 255), 2);
-		   pDoc->addPointItem(point, Gdiplus::Color(0, 255, 255), 2);//最后一个浮动点
-	   } else {
-	      pDoc->addPointItem(point, Gdiplus::Color(0, 255, 255), 2);//确认点
-	      pDoc->addPointItem(point, Gdiplus::Color(0, 255, 255), 2);//最后一个浮动点
-	   }
-	   m_isDraw    = true;
-	   m_lastPoint = point;
+	   //删除模式
 	}
 	drawAllPoint();
+	
 
 }
 
@@ -164,9 +195,22 @@ void CchessboardView::OnMouseMove(UINT nFlags, CPoint point)
 	 CchessboardDoc *pDoc = GetDocument();
 
 	if (m_isDraw) {
-	
+		
 		if (pDoc->m_groupLast != NULL) {
 			if (pDoc->m_groupLast->ptr != NULL) {
+				CMainFrame *pFrame=(CMainFrame*)GetParent();
+                CMFCStatusBar *pStatus=&pFrame->m_wndStatusBar;
+				CString str;
+				str.Format(_T("(%d, %d)"), point.x, point.y);
+				pStatus->SetWindowTextW(str);
+				if(::GetKeyState(VK_SHIFT) & 0x8000 ) {
+					if (abs(point.x - pDoc->m_groupLast->ptr->last->last->point.x) > abs(point.y - pDoc->m_groupLast->ptr->last->last->point.y)) {
+						point.y = pDoc->m_groupLast->ptr->last->last->point.y;
+					} else {
+						point.x = pDoc->m_groupLast->ptr->last->last->point.x;
+					} 
+				}
+
 				pDoc->m_groupLast->ptr->last->point = point;
 			}
 		}
@@ -268,30 +312,29 @@ CchessboardDoc* CchessboardView::GetDocument() const // 非调试版本是内联的
 void CchessboardView::OnEditDw()
 {
 	// TODO: 在此添加命令处理程序代码
+	CPoint c;
+	OnRButtonDown(0, c);
 	m_mode = M_DRAW_W;
-	//SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(NULL , IDC_CROSS));
-	//SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(AfxGetResourceHandle(), CString("pen_24px_1188125_easyicon.net.ico")));
-	SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(AfxGetResourceHandle() , MAKEINTRESOURCE(IDB_PEN_16)));
-
+	SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursorFromFile(_T("..\\res\\cur\\aero_pen.cur")));
+	
 }
 
 
 void CchessboardView::On32773()
 {
 	// TODO: 在此添加命令处理程序代码
+	CPoint c;
+	OnRButtonDown(0, c);
 	m_mode = M_DEL;
-	SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(NULL , IDC_CROSS));
+	SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursorFromFile(_T("..\\res\\cur\\delete-pro.cur")));
 }
 
 
 void CchessboardView::OnEditDa()
 {
 	// TODO: 在此添加命令处理程序代码
+	CPoint c;
+	OnRButtonDown(0, c);
 	m_mode = M_DRAW_A;
-	
-	//SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(NULL , IDC_CROSS));
-	SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursorFromFile(CString("pen_24px_1148416_easyicon.net.ico")));
-	//SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursor(this->Get , MAKEINTRESOURCE(IDI_CURSOR_PEN16)));
-	
-
+    SetClassLong(this->GetSafeHwnd(),GCL_HCURSOR , (LONG)LoadCursorFromFile(_T("..\\res\\cur\\pen_r.cur")));
 }

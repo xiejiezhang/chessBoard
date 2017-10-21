@@ -39,7 +39,7 @@ CchessboardDoc::~CchessboardDoc()
 	removeAllGroup();
 }
 
-void CchessboardDoc::addPointsGroup(PointItem_t *pItems, Color c, float width)
+void CchessboardDoc::addPointsGroup(PointItem_t *pItems, Color c, float width, POINT_TYPE type)
 {
 	if (pItems != NULL) {
 		PointItemGroup_t *pNew = new PointItemGroup_t;
@@ -58,13 +58,13 @@ void CchessboardDoc::addPointsGroup(PointItem_t *pItems, Color c, float width)
 	}
 }
 
-void CchessboardDoc::addNewPointsGroup(CPoint p, Color c, float width)
+void CchessboardDoc::addNewPointsGroup(CPoint p, Color c, float width, POINT_TYPE type)
 {
     PointItem_t *pItems = new PointItem_t;
 	pItems->next = pItems;
 	pItems->last = pItems;
 	pItems->point = p;
-	addPointsGroup(pItems, c, width);
+	addPointsGroup(pItems, c, width,type);
 }
 
 void CchessboardDoc::removeGroup(PointItem_t *pItems)
@@ -118,7 +118,7 @@ void CchessboardDoc::removeGroup(PointItem_t *pItems)
 		delete pDelGroup;
 	}
 }
-void CchessboardDoc::addPointItem(CPoint p, Color c, float width)
+void CchessboardDoc::addPointItem(CPoint p, Color c, float width, POINT_TYPE type)
 {
 	PointItem_t *pNowGroupHead = NULL;
 
@@ -138,7 +138,7 @@ void CchessboardDoc::addPointItem(CPoint p, Color c, float width)
 		m_groupLast->attr.width = width;
 	} else {
 	    //没有存在一组线，则新加一组线
-		addPointsGroup(pNew, c, width);
+		addPointsGroup(pNew, c, width, type);
 	}
 }
 void CchessboardDoc::removePointItem()
@@ -207,6 +207,81 @@ void  CchessboardDoc::removeAllGroup()
 			delete pDelGroup;
 			*/
 		}
+	}
+}
+
+bool CchessboardDoc::isInLine( CPoint *pA, CPoint *pB, CPoint c)
+{
+	bool ret = false;
+	float origin , test1, test2;
+	if ((pA == NULL ) || (pB == NULL)) {
+	   return ret;
+	}
+	if ((pA->y == pB->y) || (pA->y == c.y) || (pB->y == c.y)) {
+		if ((pA->y == c.y) && (pA->y == pB->y)) {
+		    ret = true;
+		}
+	} else {
+		origin =  (pA->x - pB->x) / (pA->y - pB->y);
+		test1  =  (c.x - pA->x) / (c.y - pA->y);
+		test2  =  (c.x - pB->x) / (c.y - pB->y);
+		if ((origin == test1) && (origin == test2)) {
+		      ret = true;
+		}
+	}
+	return ret;
+}
+bool CchessboardDoc::isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, CPoint c)
+{
+    PointItemGroup_t *pTmpGroup = m_groupHead, *pDelGroup = NULL;
+    PointItem_t      *pNowGroupHead = NULL, *pTmp = NULL, *pLast = NULL;
+
+	if ((pA == NULL ) || (pB == NULL) || (pItems == NULL)) {
+	   return false;
+	}
+	if(m_groupHead) {
+		while (pTmpGroup) {
+			pNowGroupHead = pTmpGroup->ptr;
+			
+			pTmp          = pNowGroupHead;
+			if (pTmp == NULL){
+			    continue;
+			}
+			if (pTmp->next == pTmp) {
+			   //该组只有一点
+				continue;
+			} else {
+				do {
+					pLast = pTmp;
+					pTmp = pTmp->next;
+					//判断判断斜率
+					if(isInLine(&(pTmp->point), &(pLast->point), c) == true) {
+					   pItems = pLast;
+					   *pA    = pLast->point;
+					   *pB    = pTmp->point;
+					   return true;
+					}
+				} while(pTmp->next != pNowGroupHead);
+	
+			}
+			pTmpGroup = pTmpGroup->next;
+		}
+	}
+	return false; 
+}
+//bool isDelPoint(PointItem_t *pItems, CPoint *pA);
+bool CchessboardDoc::isDelLine(PointItem_t *pItems, CPoint *pA, CPoint *pB)
+{
+    PointItem_t      *pNowGroupHead = NULL, *pTmp = NULL, *pLast = NULL;
+    pTmp          = pNowGroupHead;
+	if (pTmp == NULL){
+		return false;
+	}
+	if (pTmp->next == pTmp) {
+		//该组只有一点
+		return false;
+	} else {
+		//如果删掉的点在断电，则直接删掉
 	}
 }
 

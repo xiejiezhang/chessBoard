@@ -18,12 +18,18 @@ public:
 	PointItemGroup_t *m_groupLast;
 // ²Ù×÷
 public:
-	void addPointsGroup(PointItem_t *pItems, Color c, float width);
+	void addPointsGroup(PointItem_t *pItems, Color c, float width, POINT_TYPE type);
 	void removeGroup(PointItem_t *pItems);
-	void addPointItem(CPoint p, Color c, float width);
+	void addPointItem(CPoint p, Color c, float width, POINT_TYPE type);
 	void removePointItem();
 	void removeAllGroup();
-	void addNewPointsGroup(CPoint p, Color c, float width);
+	void addNewPointsGroup(CPoint p, Color c, float width, POINT_TYPE type);
+
+	bool isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, CPoint c);
+	//bool isDelPoint(PointItem_t *pItems, CPoint *pA);
+	bool isDelLine(PointItem_t *pItems, CPoint *pA, CPoint *pB);
+	bool isInLine( CPoint *pA, CPoint *pB, CPoint c);
+
 // ÖØÐ´
 public:
 	virtual BOOL OnNewDocument();

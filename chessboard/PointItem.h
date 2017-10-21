@@ -1,7 +1,10 @@
 #ifndef __POINTITEM_H
 #define __POINTITEM_H
 
+ 
 #include <winapifamily.h>
+
+enum POINT_TYPE{WALL_T, AREA_T};
 /**
  * 图中的每一点
  */
@@ -17,7 +20,8 @@ using namespace Gdiplus;
  */
 typedef struct __PointsGroupAttr{
     Color c;
-	float  width;
+	float       width;
+	POINT_TYPE  type;
 }PointsGroupAttr_t;
 
 /**
