@@ -25,11 +25,12 @@ public:
 	void removeAllGroup();
 	void addNewPointsGroup(CPoint p, Color c, float width, POINT_TYPE type);
 
-	bool isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, CPoint c);
+	bool isPointInLine(PointItem_t **ppItems, PointItem_t **ppA, PointItem_t **ppB, CPoint c);
 	//bool isDelPoint(PointItem_t *pItems, CPoint *pA);
-	bool isDelLine(PointItem_t *pItems, CPoint *pA, CPoint *pB);
+	bool isDelLine(PointItem_t *pItems, PointItem_t *pA, PointItem_t *pB);
 	bool isInLine( CPoint *pA, CPoint *pB, CPoint c);
-
+	int isDelPoint(PointItem_t *pItems, PointItem_t *p);
+	bool quickDelLine(CPoint c);
 // ÖØÐ´
 public:
 	virtual BOOL OnNewDocument();

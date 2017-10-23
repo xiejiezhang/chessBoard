@@ -184,6 +184,12 @@ void CchessboardView::OnLButtonDown(UINT nFlags, CPoint point)
 		}
 	} else {
 	   //删除模式
+		bool ret = pDoc->quickDelLine(point);
+		CMainFrame *pFrame=(CMainFrame*)GetParent();
+        CMFCStatusBar *pStatus=&pFrame->m_wndStatusBar;
+		CString str;
+		str.Format(_T("删除点(%d,%d)%s"), point.x, point.y, ret?_T("成功"):_T("失败"));
+		pStatus->SetWindowTextW(str);
 	}
 	drawAllPoint();
 	

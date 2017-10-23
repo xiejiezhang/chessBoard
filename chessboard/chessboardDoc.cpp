@@ -231,12 +231,12 @@ bool CchessboardDoc::isInLine( CPoint *pA, CPoint *pB, CPoint c)
 	}
 	return ret;
 }
-bool CchessboardDoc::isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, CPoint c)
+bool CchessboardDoc::isPointInLine(PointItem_t **ppItems, PointItem_t **ppA, PointItem_t **ppB, CPoint c)
 {
     PointItemGroup_t *pTmpGroup = m_groupHead, *pDelGroup = NULL;
     PointItem_t      *pNowGroupHead = NULL, *pTmp = NULL, *pLast = NULL;
 
-	if ((pA == NULL ) || (pB == NULL) || (pItems == NULL)) {
+	if ((ppA == NULL ) || (ppB == NULL) || (ppItems == NULL)) {
 	   return false;
 	}
 	if(m_groupHead) {
@@ -256,9 +256,9 @@ bool CchessboardDoc::isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, 
 					pTmp = pTmp->next;
 					//判断判断斜率
 					if(isInLine(&(pTmp->point), &(pLast->point), c) == true) {
-					   pItems = pLast;
-					   *pA    = pLast->point;
-					   *pB    = pTmp->point;
+					   *ppItems = pNowGroupHead;
+					   *ppA    = pLast;
+					   *ppB    = pTmp;
 					   return true;
 					}
 				} while(pTmp->next != pNowGroupHead);
@@ -269,22 +269,109 @@ bool CchessboardDoc::isPointInLine(PointItem_t *pItems, CPoint *pA, CPoint *pB, 
 	}
 	return false; 
 }
+
 //bool isDelPoint(PointItem_t *pItems, CPoint *pA);
-bool CchessboardDoc::isDelLine(PointItem_t *pItems, CPoint *pA, CPoint *pB)
+bool CchessboardDoc::isDelLine(PointItem_t *pItems, PointItem_t *pA, PointItem_t *pB)
 {
     PointItem_t      *pNowGroupHead = NULL, *pTmp = NULL, *pLast = NULL;
-    pTmp          = pNowGroupHead;
-	if (pTmp == NULL){
+    pTmp          = pItems;
+	int ret;
+	if ((pItems == NULL) || (pA == NULL) ||(pB == NULL)){
+		return false;
+	}
+	ret = isDelPoint(pItems, pB);
+	if( ret == 2) //必须先删掉后面的点，否则链表可能会发生变化
+	{
+		//B尾端点直接删掉B即可
+		return true;
+    }
+	isDelPoint(pItems, pA); //必须先删掉后面的点
+	return true;
+}
+int CchessboardDoc::isDelPoint(PointItem_t *pItems, PointItem_t *p)
+{
+    PointItem_t      *pNowGroupHead = NULL, *pTmp = NULL, *pLast = NULL;
+	PointItemGroup_t *pTmpGroup = m_groupHead, *pDelGroup = NULL;
+    pTmp          = pItems;
+	if ((pItems == NULL) || (p == NULL)){
 		return false;
 	}
 	if (pTmp->next == pTmp) {
 		//该组只有一点
-		return false;
+		if (pItems == p) {
+		    removeGroup(pItems);
+		    return 4;
+		} else {
+		    return -1;
+		}
 	} else {
-		//如果删掉的点在断电，则直接删掉
+		//如果删掉的点在端点，则直接删掉
+		if (pItems->last == p) {
+		   //PB在尾部端点
+		   p->last->next = p->next;
+		   p->next->last = p->last;
+		   delete p;
+		   return 2;
+		} else if(pItems == p) {
+		   //PA在头部端点
+		   p->last->next = p->next;
+		   p->next->last = p->last;
+		   //更新上层链表
+
+			//删掉该组
+			while (pTmpGroup) {
+				if (pTmpGroup->ptr == pItems) {
+				   pDelGroup = pTmpGroup;
+				   break;
+				}
+				pTmpGroup = pTmpGroup->next;
+			}
+			if (pDelGroup) {
+				pDelGroup->ptr = p->next;
+				delete p;
+				return 0;
+			}
+		} else {
+			//删掉该组
+			while (pTmpGroup) {
+				if (pTmpGroup->ptr == pItems) {
+				   pDelGroup = pTmpGroup;
+				   break;
+				}
+				pTmpGroup = pTmpGroup->next;
+			}
+			if (pDelGroup) {
+				//如果删掉的点在中间
+				//p->last->next = p->next;
+				PointItem_t *pNew = new PointItem_t;
+				*pNew = *p;
+				pNew->next    = p->next;
+				p->next->last = pNew;
+				pNew->last   = pDelGroup->ptr->last; //重装后半部分链表
+				pDelGroup->ptr->last->next = pNew;
+				//将后面的点建立新的拷贝组添加到组链表中
+				addPointsGroup(pNew, pDelGroup->attr.c, pDelGroup->attr.width, pDelGroup->attr.type);
+				
+				p->last->next = pDelGroup->ptr; //将p删除
+				pDelGroup->ptr->last = p->last;
+				delete p;
+				return 1;
+			} else {
+			    return -1;
+			}
+		}
 	}
 }
 
+bool CchessboardDoc::quickDelLine(CPoint c)
+{
+   PointItem_t *pItems=NULL, *pA=NULL, *pB=NULL;
+   bool ret = false;
+   if(isPointInLine(&pItems, &pA, &pB, c)) {
+       ret = isDelLine(pItems, pA, pB);
+   }
+   return ret;
+}
 BOOL CchessboardDoc::OnNewDocument()
 {
 	if (!CDocument::OnNewDocument())
