@@ -14,6 +14,7 @@
 #include "PointItem.h"
 #include "MainFrm.h"
 
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -265,6 +266,57 @@ void CchessboardView::drawPointGroup(CDC* pDC, PointItemGroup_t *pGroup)
 
 	}
 }
+
+
+void CchessboardView::showAllPointInfo(HDC hdc, Graphics *pgraphics)
+{
+	
+
+	 Gdiplus::FontFamily fontFamily(L"свт╡");  
+	 Gdiplus::Font font(&fontFamily, 12, FontStyleRegular, UnitPixel);
+	 LOGFONT lf;  
+	 ::GetObject((HFONT)GetStockObject(DEFAULT_GUI_FONT), sizeof(lf), &lf);  
+	 memcpy(lf.lfFaceName, "Arial", 5) ;  
+	 lf.lfHeight = 13 ;  
+	 Gdiplus::Font Gdi_font(hdc, &lf);  
+	 StringFormat stringformat;  
+	 stringformat.SetAlignment(StringAlignmentCenter);  
+     stringformat.SetLineAlignment(StringAlignmentCenter);  
+	 SolidBrush brush(Color(255, 255, 0, 0));
+	 CRect rcClient ;  
+     GetClientRect(rcClient);
+	 pgraphics->SetTextRenderingHint(TextRenderingHintAntiAlias);  
+	 float x = 100, y=100;
+	 //pgraphics->DrawString(TEXT("1234"), -1, &font,  
+     //RectF(0, 0, rcClient.Width(), rcClient.Height()), &stringformat, &brush); 
+
+	 CchessboardDoc *pDoc = GetDocument();
+	 PointItemGroup_t *p_groupHead = pDoc->m_groupHead, *p_temp;
+	 p_temp = p_groupHead;
+	 
+	 while (p_temp) {
+		CString str;
+		str.Format(_T("(%d, %d)"), p_temp->ptr->point.x, p_temp->ptr->point.y);
+		pgraphics->DrawString(str, -1, &font,  RectF(0, 0, x, y), &stringformat, &brush); 
+		x += 150;
+		//drawPointGroup(&dc, p_temp);
+		Pen newPen(p_temp->attr.c, p_temp->attr.width);
+		PointItem_t *pItem = p_temp->ptr;
+		PointItem_t *pEnd  = pItem->last;
+		while((pItem != pItem->next) && (pEnd != pItem)) {
+		    str.Format(_T("-->(%d, %d)"), (pItem->next->point.x),(pItem->next->point.y));
+		    pgraphics->DrawString(str, -1, &font,  RectF(0, 0, x, y), &stringformat, &brush); 
+		    x += 150;
+		    pgraphics->DrawLine(&newPen, pItem->point.x, pItem->point.y, (pItem->next->point.x), (pItem->next->point.y));
+			pItem = pItem->next;
+		}
+
+	    p_temp = p_temp->next;
+		y += 50;
+		x  = 100;
+	 }
+}
+
 void CchessboardView::drawAllPoint()
 {
 	 CDC *pDC = GetDC();
@@ -283,6 +335,7 @@ void CchessboardView::drawAllPoint()
 		 drawPointGroup(&dc, p_temp);
 	     p_temp = p_temp->next;
 	 }
+	 showAllPointInfo(hdc, &graphics);
 }
 
 void CchessboardView::OnLButtonUp(UINT nFlags, CPoint point)

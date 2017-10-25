@@ -280,8 +280,12 @@ bool CchessboardDoc::isDelLine(PointItem_t *pItems, PointItem_t *pA, PointItem_t
 		return false;
 	}
 	ret = isDelPoint(pItems, pB);
-	if( ret == 2) //必须先删掉后面的点，否则链表可能会发生变化
+	if((ret == 2)) //必须先删掉后面的点，否则链表可能会发生变化
 	{
+		if (pItems->next == pItems) {
+		   //如果B是断电，删掉后，A还是一个点，则删掉整个组
+		   removeGroup(pItems);
+		}
 		//B尾端点直接删掉B即可
 		return true;
     }
