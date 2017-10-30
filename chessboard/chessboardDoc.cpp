@@ -10,6 +10,7 @@
 #endif
 
 #include "chessboardDoc.h"
+#include "math.h"
 
 #include <propkey.h>
 
@@ -214,20 +215,58 @@ bool CchessboardDoc::isInLine( CPoint *pA, CPoint *pB, CPoint c)
 {
 	bool ret = false;
 	float origin , test1, test2;
+	float A, B, C, d;
 	if ((pA == NULL ) || (pB == NULL)) {
 	   return ret;
 	}
+	if (pA->x > pB->x) {
+		if (c.x > pA->x) {
+		   return ret;
+		} else if(c.x < pB->x){
+		   return ret;
+		}
+	} else {
+		if (c.x < pA->x) {
+		   return ret;
+		} else if(c.x > pB->x){
+		   return ret;
+		}
+	}
+
+   if (pA->y > pB->y) {
+		if (c.y > pA->y) {
+		   return ret;
+		} else if(c.y < pB->y){
+		   return ret;
+		}
+	} else {
+		if (c.y < pA->y) {
+		   return ret;
+		} else if(c.y > pB->y){
+		   return ret;
+		}
+	}
+
+	
 	if ((pA->y == pB->y) || (pA->y == c.y) || (pB->y == c.y)) {
 		if ((pA->y == c.y) && (pA->y == pB->y)) {
 		    ret = true;
 		}
 	} else {
+		A = pB->y - pA->y;
+		B = pA->x - pB->x;
+		C = pB->x * pA->y - pA->x * pB->y;
+		d = abs((A*c.x + B*c.y + C)/(sqrtf(A*A+B*B)));
+		if (d < 5) {
+		    ret = true;
+		}
+		/*
 		origin =  (pA->x - pB->x) / (pA->y - pB->y);
 		test1  =  (c.x - pA->x) / (c.y - pA->y);
 		test2  =  (c.x - pB->x) / (c.y - pB->y);
 		if ((origin == test1) && (origin == test2)) {
 		      ret = true;
-		}
+		}*/
 	}
 	return ret;
 }
@@ -280,15 +319,16 @@ bool CchessboardDoc::isDelLine(PointItem_t *pItems, PointItem_t *pA, PointItem_t
 		return false;
 	}
 	ret = isDelPoint(pItems, pB);
-	if((ret == 2)) //必须先删掉后面的点，否则链表可能会发生变化
+	if((ret == 2)||(ret == 3)) //必须先删掉后面的点，否则链表可能会发生变化
 	{
-		if (pItems->next == pItems) {
+		if ((pItems->next == pItems)) {
 		   //如果B是断电，删掉后，A还是一个点，则删掉整个组
 		   removeGroup(pItems);
 		}
 		//B尾端点直接删掉B即可
+		//A所在的组只有A和断电两个点，因此A不需要删除
 		return true;
-    }
+	}
 	isDelPoint(pItems, pA); //必须先删掉后面的点
 	return true;
 }
@@ -336,7 +376,7 @@ int CchessboardDoc::isDelPoint(PointItem_t *pItems, PointItem_t *p)
 				return 0;
 			}
 		} else {
-			//删掉该组
+			
 			while (pTmpGroup) {
 				if (pTmpGroup->ptr == pItems) {
 				   pDelGroup = pTmpGroup;
@@ -358,7 +398,19 @@ int CchessboardDoc::isDelPoint(PointItem_t *pItems, PointItem_t *p)
 				
 				p->last->next = pDelGroup->ptr; //将p删除
 				pDelGroup->ptr->last = p->last;
+				
+				if (p->last->last == pDelGroup->ptr) {
+				//    p->next = pDelGroup->ptr;
+				//    pDelGroup->ptr->last = p;
+					//A组将只有端点和A的点，所以不用删除A点
+					delete p;
+					return 3;
+				} 
 				delete p;
+				//else {
+				   
+				//}
+				
 				return 1;
 			} else {
 			    return -1;
