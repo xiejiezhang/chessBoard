@@ -219,6 +219,16 @@ bool CchessboardDoc::isInLine( CPoint *pA, CPoint *pB, CPoint c)
 	if ((pA == NULL ) || (pB == NULL)) {
 	   return ret;
 	}
+	A = pB->y - pA->y;
+	B = pA->x - pB->x;
+	C = pB->x * pA->y - pA->x * pB->y;
+	d = abs((A*c.x + B*c.y + C)/(sqrtf(A*A+B*B)));
+	if ((A == 0) || (B == 0)) {
+	    if (d < 5) {
+		    return true;
+		}
+	}
+	
 	if (pA->x > pB->x) {
 		if (c.x > pA->x) {
 		   return ret;
@@ -246,27 +256,8 @@ bool CchessboardDoc::isInLine( CPoint *pA, CPoint *pB, CPoint c)
 		   return ret;
 		}
 	}
-
-	
-	if ((pA->y == pB->y) || (pA->y == c.y) || (pB->y == c.y)) {
-		if ((pA->y == c.y) && (pA->y == pB->y)) {
-		    ret = true;
-		}
-	} else {
-		A = pB->y - pA->y;
-		B = pA->x - pB->x;
-		C = pB->x * pA->y - pA->x * pB->y;
-		d = abs((A*c.x + B*c.y + C)/(sqrtf(A*A+B*B)));
-		if (d < 5) {
-		    ret = true;
-		}
-		/*
-		origin =  (pA->x - pB->x) / (pA->y - pB->y);
-		test1  =  (c.x - pA->x) / (c.y - pA->y);
-		test2  =  (c.x - pB->x) / (c.y - pB->y);
-		if ((origin == test1) && (origin == test2)) {
-		      ret = true;
-		}*/
+	if (d < 5) {
+		ret = true;
 	}
 	return ret;
 }
